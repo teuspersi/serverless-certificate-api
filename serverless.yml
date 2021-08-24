@@ -1,3 +1,5 @@
+org: mateuspersi
+app: ignitecertificate
 service: "ignitecertificate"
 
 configValidationMode: error
@@ -51,7 +53,10 @@ functions:
         Action:
           - dynamodb:Query
           - dynamodb:PutItem
-        Resource: "arn:aws:dynamodb:${self.provider.region}:*:table/users_certificates"
+          - s3:*
+        Resource:
+          - "arn:aws:dynamodb:sa-east-1:*:table/users_certificates"
+
   verifyCertificate:
     handler: src/functions/verifyCertificate.handle
     events:
@@ -63,7 +68,8 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: "arn:aws:dynamodb:${self.provider.region}:*:table/users_certificates"
+        Resource:
+          - "arn:aws:dynamodb:sa-east-1:*:table/users_certificates"
 
 resources:
   Resources:

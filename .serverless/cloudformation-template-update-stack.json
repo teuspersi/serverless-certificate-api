@@ -174,6 +174,58 @@
         }
       }
     },
+    "EnterpriseLogAccessIamRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::802587217904:root"
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "sts:ExternalId": "ServerlessEnterprise-2770ca93-9965-4e4a-97bf-0d1274b4017e"
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "LogFilterAccess",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:FilterLogEvents"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "GenerateCertificateLogGroup",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::GetAtt": [
+                        "VerifyCertificateLogGroup",
+                        "Arn"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
     "GenerateCertificateLambdaFunction": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
@@ -181,9 +233,9 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/ignitecertificate/dev/1629508120362-2021-08-21T01:08:40.362Z/ignitecertificate.zip"
+          "S3Key": "serverless/ignitecertificate/dev/1629578939892-2021-08-21T20:48:59.892Z/ignitecertificate.zip"
         },
-        "Handler": "src/functions/generateCertificate.handle",
+        "Handler": "s_generateCertificate.handler",
         "Runtime": "nodejs14.x",
         "FunctionName": "ignitecertificate-dev-generateCertificate",
         "MemorySize": 1024,
@@ -208,9 +260,9 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/ignitecertificate/dev/1629508120362-2021-08-21T01:08:40.362Z/ignitecertificate.zip"
+          "S3Key": "serverless/ignitecertificate/dev/1629578939892-2021-08-21T20:48:59.892Z/ignitecertificate.zip"
         },
-        "Handler": "src/functions/verifyCertificate.handle",
+        "Handler": "s_verifyCertificate.handler",
         "Runtime": "nodejs14.x",
         "FunctionName": "ignitecertificate-dev-verifyCertificate",
         "MemorySize": 1024,
@@ -228,24 +280,24 @@
         "VerifyCertificateLogGroup"
       ]
     },
-    "VerifyCertificateLambdaVersionzB7IA1cymh0V7yBGV2pKEU9bjadmlRcwhjfXmFLtG24": {
-      "Type": "AWS::Lambda::Version",
-      "DeletionPolicy": "Retain",
-      "Properties": {
-        "FunctionName": {
-          "Ref": "VerifyCertificateLambdaFunction"
-        },
-        "CodeSha256": "Y9lhKjWri6B2dl6zbK5KnJIA0+aDLOBhpUWfmEVNnb8="
-      }
-    },
-    "GenerateCertificateLambdaVersionxgWBOqFmLjpPVhH8oENRzRFThNWdM17H3176IEm8H4": {
+    "GenerateCertificateLambdaVersiongUvOt5SMrj0VnLnPv3ul95mUw2msfdO6tcz8V5V1veo": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "GenerateCertificateLambdaFunction"
         },
-        "CodeSha256": "Y9lhKjWri6B2dl6zbK5KnJIA0+aDLOBhpUWfmEVNnb8="
+        "CodeSha256": "PI+WxmorQYY995KfiPs2Zdn+tGZdyGdwoftA/qBtNxQ="
+      }
+    },
+    "VerifyCertificateLambdaVersionomHd7JhIiVVp8soOmSyZVhBMckqjhe6qpD9oq7E": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "VerifyCertificateLambdaFunction"
+        },
+        "CodeSha256": "PI+WxmorQYY995KfiPs2Zdn+tGZdyGdwoftA/qBtNxQ="
       }
     },
     "ApiGatewayRestApi": {
@@ -484,7 +536,7 @@
         "VerifyCertificateLambdaPermissionApiGateway"
       ]
     },
-    "ApiGatewayDeployment1629508081782": {
+    "ApiGatewayDeployment1629578892830": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -573,6 +625,133 @@
         }
       }
     },
+    "ApiGatewayLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/api-gateway/ignitecertificate-dev"
+      }
+    },
+    "CustomApiGatewayAccountCloudWatchRole": {
+      "Type": "Custom::ApiGatewayAccountRole",
+      "Version": 1,
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomDashresourceDashapigwDashcwDashroleLambdaFunction",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "IamRoleCustomResourcesLambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "dev",
+                  "ignitecertificate",
+                  "custom-resources-lambda"
+                ]
+              ]
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      ":",
+                      [
+                        "arn",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        "iam:",
+                        {
+                          "Ref": "AWS::AccountId"
+                        },
+                        "role/*"
+                      ]
+                    ]
+                  },
+                  "Action": [
+                    "iam:AttachRolePolicy",
+                    "iam:CreateRole",
+                    "iam:ListAttachedRolePolicies",
+                    "iam:PassRole"
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      ":",
+                      [
+                        "arn",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        "apigateway:*::/account"
+                      ]
+                    ]
+                  },
+                  "Action": [
+                    "apigateway:GET",
+                    "apigateway:PATCH"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "CustomDashresourceDashapigwDashcwDashroleLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/ignitecertificate/dev/1629578939892-2021-08-21T20:48:59.892Z/custom-resources.zip"
+        },
+        "FunctionName": "ignitecertificate-dev-custom-resource-apigw-cw-role",
+        "Handler": "apiGatewayCloudWatchRole/handler.handler",
+        "MemorySize": 1024,
+        "Runtime": "nodejs12.x",
+        "Timeout": 180,
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleCustomResourcesLambdaExecution",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "IamRoleCustomResourcesLambdaExecution"
+      ]
+    },
     "GenerateCertificateIamRoleLambdaExecution": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -624,9 +803,10 @@
                   "Effect": "Allow",
                   "Action": [
                     "dynamodb:Query",
-                    "dynamodb:PutItem"
+                    "dynamodb:PutItem",
+                    "s3:*"
                   ],
-                  "Resource": "arn:aws:dynamodb:${self.provider.region}:*:table/users_certificates"
+                  "Resource": "arn:aws:dynamodb:sa-east-1:*:table/users_certificates"
                 }
               ]
             }
@@ -702,7 +882,7 @@
                   "Action": [
                     "dynamodb:Query"
                   ],
-                  "Resource": "arn:aws:dynamodb:${self.provider.region}:*:table/users_certificates"
+                  "Resource": "arn:aws:dynamodb:sa-east-1:*:table/users_certificates"
                 }
               ]
             }
@@ -747,6 +927,36 @@
           }
         ]
       }
+    },
+    "CWLSubFilterGenerateCertificateLogGroupSaEast1": {
+      "Type": "AWS::Logs::SubscriptionFilter",
+      "Properties": {
+        "DestinationArn": "arn:aws:logs:sa-east-1:802587217904:destination:2770ca93-9965-4e4a-97bf-0d1274b4017e#35PHWp2t3dVpZGdCY1#ignitecertificate#dev",
+        "FilterPattern": "?\"REPORT RequestId: \" ?\"SERVERLESS_ENTERPRISE\"",
+        "LogGroupName": {
+          "Ref": "GenerateCertificateLogGroup"
+        }
+      }
+    },
+    "CWLSubFilterVerifyCertificateLogGroupSaEast1": {
+      "Type": "AWS::Logs::SubscriptionFilter",
+      "Properties": {
+        "DestinationArn": "arn:aws:logs:sa-east-1:802587217904:destination:2770ca93-9965-4e4a-97bf-0d1274b4017e#35PHWp2t3dVpZGdCY1#ignitecertificate#dev",
+        "FilterPattern": "?\"REPORT RequestId: \" ?\"SERVERLESS_ENTERPRISE\"",
+        "LogGroupName": {
+          "Ref": "VerifyCertificateLogGroup"
+        }
+      }
+    },
+    "CWLSubFilterApiGatewayLogGroupSaEast1": {
+      "Type": "AWS::Logs::SubscriptionFilter",
+      "Properties": {
+        "DestinationArn": "arn:aws:logs:sa-east-1:802587217904:destination:2770ca93-9965-4e4a-97bf-0d1274b4017e#35PHWp2t3dVpZGdCY1#ignitecertificate#dev",
+        "FilterPattern": "\"SLS_ACCESS_LOG\"",
+        "LogGroupName": {
+          "Ref": "ApiGatewayLogGroup"
+        }
+      }
     }
   },
   "Outputs": {
@@ -758,22 +968,33 @@
         "Name": "sls-ignitecertificate-dev-ServerlessDeploymentBucketName"
       }
     },
-    "VerifyCertificateLambdaFunctionQualifiedArn": {
-      "Description": "Current Lambda function version",
+    "EnterpriseLogAccessIamRole": {
       "Value": {
-        "Ref": "VerifyCertificateLambdaVersionzB7IA1cymh0V7yBGV2pKEU9bjadmlRcwhjfXmFLtG24"
+        "Fn::GetAtt": [
+          "EnterpriseLogAccessIamRole",
+          "Arn"
+        ]
       },
       "Export": {
-        "Name": "sls-ignitecertificate-dev-VerifyCertificateLambdaFunctionQualifiedArn"
+        "Name": "sls-ignitecertificate-dev-EnterpriseLogAccessIamRole"
       }
     },
     "GenerateCertificateLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "GenerateCertificateLambdaVersionxgWBOqFmLjpPVhH8oENRzRFThNWdM17H3176IEm8H4"
+        "Ref": "GenerateCertificateLambdaVersiongUvOt5SMrj0VnLnPv3ul95mUw2msfdO6tcz8V5V1veo"
       },
       "Export": {
         "Name": "sls-ignitecertificate-dev-GenerateCertificateLambdaFunctionQualifiedArn"
+      }
+    },
+    "VerifyCertificateLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "VerifyCertificateLambdaVersionomHd7JhIiVVp8soOmSyZVhBMckqjhe6qpD9oq7E"
+      },
+      "Export": {
+        "Name": "sls-ignitecertificate-dev-VerifyCertificateLambdaFunctionQualifiedArn"
       }
     },
     "ServiceEndpoint": {

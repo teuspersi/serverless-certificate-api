@@ -6,7 +6,7 @@ import * as handlebars from "handlebars";
 import * as dayjs from "dayjs";
 import { S3 } from "aws-sdk";
 
-import {document} from "../utils/dynamodbClient";
+import { document } from "../utils/dynamodbClient";
 
 interface ICreateCertificate {
   id: string;
@@ -23,34 +23,43 @@ interface ITemplate {
 }
 
 const compile = async function (data: ITemplate) {
-  const filePath = path.join(process.cwd(), "src", "templates", "certificate.hbs");
+  const filePath = path.join(
+    process.cwd(),
+    "src",
+    "templates",
+    "certificate.hbs"
+  );
 
   const html = fs.readFileSync(filePath, "utf-8");
   return handlebars.compile(html)(data);
-}
+};
 
 export const handle = async (event) => {
-  const {id, name, grade} = JSON.parse(event.body) as ICreateCertificate;
+  const { id, name, grade } = JSON.parse(event.body) as ICreateCertificate;
 
-  const response = await document.query({
-    TableName: "users_certificates",
-    KeyConditionExpression: "id = :id",
-    ExpressionAttributeValues: {
-      ":id": id
-    }
-  }).promise();
+  const response = await document
+    .query({
+      TableName: "users_certificates",
+      KeyConditionExpression: "id = :id",
+      ExpressionAttributeValues: {
+        ":id": id,
+      },
+    })
+    .promise();
 
   const userAlreadyExists = response.Items[0];
 
-  if(!userAlreadyExists) {
-    await document.put({
-      TableName: "users_certificates",
-      Item: {
-        id,
-        name,
-        grade
-      }
-    }).promise();
+  if (!userAlreadyExists) {
+    await document
+      .put({
+        TableName: "users_certificates",
+        Item: {
+          id,
+          name,
+          grade,
+        },
+      })
+      .promise();
   }
 
   const medalPath = path.join(process.cwd(), "src", "templates", "selo.png");
@@ -61,8 +70,8 @@ export const handle = async (event) => {
     grade,
     name,
     id,
-    medal
-  }
+    medal,
+  };
 
   // Gera certificado
   const content = await compile(data);
@@ -72,12 +81,12 @@ export const handle = async (event) => {
     headless: true,
     args: chromium.args,
     defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath
+    executablePath: await chromium.executablePath,
   });
 
   const page = await browser.newPage();
 
-  await page.setContent(content)
+  await page.setContent(content);
 
   // @ts-ignore
   const pdf = await page.pdf({
@@ -85,21 +94,23 @@ export const handle = async (event) => {
     landscape: true,
     path: process.env.IS_OFFLINE ? "certificate.pdf" : null,
     printBackground: true,
-    preferCSSPageSize: true
-  })
+    preferCSSPageSize: true,
+  });
 
   await browser.close();
 
   // Salvar no S3
   const s3 = new S3();
 
-  await s3.putObject({
-    Bucket: "certificadosignite",
-    Key: `${id}.pdf`,
-    ACL: "public-read",
-    Body: pdf,
-    ContentType: "application/pdf"
-  }).promise();
+  await s3
+    .putObject({
+      Bucket: "certificadosignite",
+      Key: `${id}.pdf`,
+      ACL: "public-read",
+      Body: pdf,
+      ContentType: "application/pdf",
+    })
+    .promise();
 
   return {
     statusCode: 201,
@@ -109,6 +120,6 @@ export const handle = async (event) => {
     }),
     headers: {
       "Content-type": "application/json",
-    }
-  }
+    },
+  };
 };
